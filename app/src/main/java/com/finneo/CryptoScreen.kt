@@ -50,32 +50,35 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun FiatScreen() {
-    // Definimos como 0 pois é a tela fiduciária
-    var selectedTab by remember { mutableStateOf(0) }
+fun CryptoScreen() {
+    // Definimos como 1 pois é a tela Crypto
+    var selectedTab by remember { mutableStateOf(1) }
 
-    // Dados Fiduciários
-    val assetData = listOf(
-        Asset("MXRF11", "0,42%", "Rend. último ano", "12,05%", "Setor", "Papel", "Preço BRL", "R$9,49", "Valor em carteira", "25.000,00", Color(0xFF43A047)),
-        Asset("CPTS11", "0,41%", "Rend. último ano", "12,95%", "Setor", "Papel", "Preço BRL", "R$7,30", "Valor em carteira", "25.000,00", Color(0xFF43A047)),
-        Asset("GARE11", "-0,42%", "Rend. último ano", "12,05%", "Setor", "Papel", "Preço BRL", "R$9,49", "Valor em carteira", "25.000,00", Color(0xFF43A047)),
-        Asset("MXRF11", "0,42%", "Rend. último ano", "12,05%", "Setor", "Papel", "Preço BRL", "R$9,49", "Valor em carteira", "25.000,00", Color(0xFF43A047))
+    // Dados Criptomoedas
+    val cryptoAssets = listOf(
+        Asset("BTC", "+1,20%", "Var. 24h", "+1,20%", "Rede", "Bitcoin", "Preço BRL", "R$380.000", "Valor em carteira", "45.000,00", Color(0xFF43A047)),
+        Asset("ETH", "-0,50%", "Var. 24h", "-0,50%", "Rede", "Ethereum", "Preço BRL", "R$15.200", "Valor em carteira", "20.000,00", Color(0xFFFF5757)),
+        Asset("SOL", "+5,40%", "Var. 24h", "+5,40%", "Rede", "Solana", "Preço BRL", "R$850,00", "Valor em carteira", "5.000,00", Color(0xFF43A047)),
+        Asset("USDT", "0,01%", "Var. 24h", "0,01%", "Rede", "Tron", "Preço BRL", "R$5,10", "Valor em carteira", "10.000,00", Color(0xFF43A047))
     )
 
-    val detailColors = listOf(
-        Color(0xFF43A047).copy(red = 0.2f, green = 0.45f, blue = 0.2f),
-        Color(0xFF304D8C),
-        Color(0xFF8D5353),
+    // Cores específicas de cripto
+    val cryptoDetailColors = listOf(
+        Color(0xFFF7931A), // Laranja BTC
+        Color(0xFF627EEA), // Roxo/Azul ETH
+        Color(0xFF26A17B), // Verde USDT
     )
-    val portfolioDetails = listOf(
-        PortfolioDetail("33,28%", "Fundos Imobiliários", "R$ ********", detailColors[1]),
-        PortfolioDetail("33,36%", "Ações", "R$ ********", detailColors[2]),
-        PortfolioDetail("33,36%", "Poupança", "R$ ********", detailColors[0]),
+
+    val cryptoDetails = listOf(
+        PortfolioDetail("50,00%", "Bitcoin", "R$ ********", cryptoDetailColors[0]),
+        PortfolioDetail("30,00%", "Altcoins", "R$ ********", cryptoDetailColors[1]),
+        PortfolioDetail("20,00%", "Stablecoins", "R$ ********", cryptoDetailColors[2]),
     )
-    val chartDetails = listOf(
-        PortfolioDetail("33,36%", "Ações", "R$ ********", detailColors[2]),
-        PortfolioDetail("33,28%", "Fundos Imobiliários", "R$ ********", detailColors[1]),
-        PortfolioDetail("33,36%", "Poupança", "R$ ********", detailColors[0]),
+
+    val cryptoChartDetails = listOf(
+        PortfolioDetail("50,00%", "Bitcoin", "R$ ********", cryptoDetailColors[0]),
+        PortfolioDetail("30,00%", "Altcoins", "R$ ********", cryptoDetailColors[1]),
+        PortfolioDetail("20,00%", "Stablecoins", "R$ ********", cryptoDetailColors[2]),
     )
 
     var isValueVisible by remember { mutableStateOf(false) }
@@ -105,18 +108,18 @@ fun FiatScreen() {
                         Box(
                             modifier = Modifier.fillMaxHeight().clip(RoundedCornerShape(25))
                                 .background(if (selectedTab == 0) BrightGreen else Color.Transparent)
-                                .clickable { selectedTab = 0 },
+                                .clickable { selectedTab = 0 }, // Aqui navegaria para FiatScreen
                             contentAlignment = Alignment.Center
                         ) {
                             Text("Fiduciário", color = if (selectedTab == 0) Color.Black else Color.White, fontWeight = FontWeight.SemiBold, style = TextStyle(fontFamily = LeagueSpartanFont, fontSize = 16.sp), modifier = Modifier.padding(horizontal = 16.dp))
                         }
                         Box(
                             modifier = Modifier.fillMaxHeight().clip(RoundedCornerShape(20.dp))
-                                .background(if (selectedTab == 1) LightBackground else Color.Transparent)
-                                .clickable { selectedTab = 1 }, // Aqui você navegaria para a CryptoScreen
+                                .background(if (selectedTab == 1) BrightGreen else Color.Transparent) // BrightGreen aqui pois é a aba ativa
+                                .clickable { selectedTab = 1 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Criptomoedas", color = if (selectedTab == 1) DarkGreen else Color.White, fontWeight = FontWeight.SemiBold, style = TextStyle(fontFamily = LeagueSpartanFont, fontSize = 16.sp), modifier = Modifier.padding(horizontal = 16.dp))
+                            Text("Criptomoedas", color = if (selectedTab == 1) Color.Black else Color.White, fontWeight = FontWeight.SemiBold, style = TextStyle(fontFamily = LeagueSpartanFont, fontSize = 16.sp), modifier = Modifier.padding(horizontal = 16.dp))
                         }
                     }
                     Spacer(modifier = Modifier.size(40.dp))
@@ -137,7 +140,7 @@ fun FiatScreen() {
                 Text("Valor total acumulado", fontSize = 16.sp, color = Color.Black, fontFamily = AlataFont, fontWeight = FontWeight.SemiBold, modifier = Modifier.fillMaxWidth().padding(6.dp))
                 Row(modifier = Modifier.fillMaxWidth().padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("R$ ", fontWeight = FontWeight.Bold, fontSize = 24.sp, fontFamily = AlataFont)
-                    Text(if (isValueVisible) "25.000,00" else "*****", fontWeight = FontWeight.Bold, fontSize = 24.sp, fontFamily = AlataFont)
+                    Text(if (isValueVisible) "80.000,00" else "*****", fontWeight = FontWeight.Bold, fontSize = 24.sp, fontFamily = AlataFont)
                     IconButton(onClick = { isValueVisible = !isValueVisible }) { Icon(if (isValueVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "Valor", tint = Color.Black) }
                 }
             }
@@ -159,22 +162,22 @@ fun FiatScreen() {
                 }
                 Spacer(modifier = Modifier.height(12.dp))
             }
-            items(assetData.chunked(2).size) { rowIndex ->
+            items(cryptoAssets.chunked(2).size) { rowIndex ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    assetData.chunked(2)[rowIndex].forEach { asset -> AssetCard(asset = asset) }
+                    cryptoAssets.chunked(2)[rowIndex].forEach { asset -> AssetCard(asset = asset) }
                 }
             }
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("Resumo dos investimentos fiduciários", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium.copy(fontFamily = AlataFont, fontWeight = FontWeight.SemiBold), textAlign = TextAlign.Center)
+                Text("Resumo dos criptoativos", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium.copy(fontFamily = AlataFont, fontWeight = FontWeight.SemiBold), textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
-                SimulatedPieChart(details = chartDetails)
+                SimulatedPieChart(details = cryptoChartDetails)
                 Spacer(modifier = Modifier.height(32.dp))
             }
             item {
                 Text("Detalhamento", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium.copy(fontFamily = AlataFont, fontWeight = FontWeight.SemiBold))
                 Spacer(modifier = Modifier.height(16.dp))
-                portfolioDetails.forEach { detail -> DetailCard(detail = detail) }
+                cryptoDetails.forEach { detail -> DetailCard(detail = detail) }
             }
         }
     }
