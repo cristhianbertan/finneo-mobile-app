@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             FinneoTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color.LightGray
+                    color = Color.White
                 ) {
                     AppNav()
                 }
@@ -52,7 +52,10 @@ fun AppNav() {
         composable("password") {
             LoginSectionPassword (
                 onContinue = {
-                    //Navegação para a tela home aqui
+                    // Login Sucesso -> Vai para Home e remove telas de login da pilha
+                    navController.navigate("home") {
+                        popUpTo("email") { inclusive = true }
+                    }
                 },
                 onForgotPassword = {
                     navController.navigate("forgot_password")
@@ -63,9 +66,21 @@ fun AppNav() {
         composable("register") {
             RegisterScreen (
                 onContinue = {
-                    //Assim que o usuário criar a conta, poderá navegar para a tela Home caso quiser
+                    // Cadastro Sucesso -> Vai para Home
+                    navController.navigate("home") {
+                        popUpTo("email") { inclusive = true }
+                    }
                 }
             )
+        }
+
+        //Home com Toggle Switch
+        composable("home") {
+            HomeScreen(navController = navController)
+        }
+
+        composable("forgot_password") {
+            // Você pode criar uma tela ForgotPasswordScreen depois
         }
     }
 }

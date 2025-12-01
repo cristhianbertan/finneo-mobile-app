@@ -14,15 +14,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,8 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,9 +49,9 @@ fun LoginSectionPassword(
     onForgotPassword: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
-    var email by remember { mutableStateOf("cr****@gmail.com") }
+    var emailState by remember { mutableStateOf(email) }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var isError by remember { mutableStateOf(false) }
 
     Scaffold (
         containerColor = Color(0xFFFFFFFF),
@@ -126,7 +121,7 @@ fun LoginSectionPassword(
             //Email mascarado
             Text(
                 modifier = Modifier.align(Alignment.Start),
-                text = email,
+                text = emailState,
                 style = TextStyle(
                     fontFamily = AlataFont,
                     fontSize = 16.sp,
@@ -135,17 +130,50 @@ fun LoginSectionPassword(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            Text(
+                text = "Senha",
+                style = TextStyle(
+                    fontFamily = AlataFont,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
             PasswordField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    if (isError) isError = false
+                },
                 modifier = Modifier.fillMaxWidth(),
-                AlataFont = AlataFont
+                AlataFont = AlataFont,
+                isError = isError
             )
+
+            if (isError) {
+                Text(
+                    text = "Por favor, insira sua senha",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    fontFamily = AlataFont,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, start = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             ElevatedButton(
-                onClick = onContinue,
+                onClick = {
+                    if (password.isEmpty()) {
+                        isError = true
+                    } else {
+                        isError = false
+                        onContinue()
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(46.dp),

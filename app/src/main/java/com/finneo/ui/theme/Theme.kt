@@ -37,11 +37,6 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     */
 )
-
-val DarkGreen = Color(0xFF025B2F)
-val BrightGreen = Color(0xFF00C749)
-val LightBackground = Color(0xFFEEEEEE)
-val AlataFont = androidx.compose.ui.text.font.FontFamily.SansSerif
 val LeagueSpartanFont = FontFamily(Font(R.font.league_spartan))
 
 @Composable
