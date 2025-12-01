@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -50,7 +48,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,15 +60,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -80,10 +77,8 @@ import androidx.compose.ui.unit.sp
 import com.finneo.ui.theme.AlataFont
 import com.finneo.ui.theme.BrightGreen
 import java.util.Calendar
-import kotlin.math.cos
-import kotlin.math.sin
+import java.util.Locale
 
-// --- DATA CLASSES ---
 data class Asset(
     val ticker: String,
     val valuationLastDay: String,
@@ -107,7 +102,6 @@ data class PortfolioDetail(
     val color: Color
 )
 
-// Função auxiliar interna para converter string monetária em Double dentro deste arquivo
 private fun String.parseMoney(): Double {
     return this.replace("R$", "")
         .trim()
@@ -117,511 +111,54 @@ private fun String.parseMoney(): Double {
 }
 
 @Composable
-fun AssetCard(
-    asset: Asset,
-    isValueVisible: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val valuationColor = if (asset.valuationLastDay.contains("-")) {
-        Color(0xFFFF5757)
-    } else {
-        BrightGreen
-    }
-
-    val cornerShape = RoundedCornerShape(12.dp)
-
-    Card(
-        modifier = modifier
-            .wrapContentHeight()
-            .padding(4.dp)
-            .border(1.dp, Color(0xFFE0E0E0), cornerShape),
-        shape = cornerShape,
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // --- LINHA 1: Ticker e Badge ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(
-                    text = asset.ticker,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color.Black
-                )
-                Text(
-                    text = asset.valuationLastDay,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .background(valuationColor, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                )
-            }
-
-            // --- LINHA 2: Rendimento ---
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Rend. último ano",
-                    fontSize = 9.sp,
-                    color = Color.Gray,
-                    lineHeight = 9.sp
-                )
-                Text(
-                    text = asset.percentProfitPerYear,
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    modifier = Modifier.offset(y = (-2).dp)
-                )
-            }
-
-            // --- LINHA 3: Setor e Valor em Carteira ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Setor
-                Column {
-                    Text(
-                        text = asset.titleType,
-                        fontSize = 9.sp,
-                        color = Color.Gray,
-                        lineHeight = 9.sp
-                    )
-                    Text(
-                        text = asset.type,
-                        fontSize = 14.sp,
-                        color = Color.Black,
-                        modifier = Modifier.offset(y = (-2).dp)
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Valor em carteira",
-                        fontSize = 9.sp,
-                        color = Color.Gray,
-                        lineHeight = 9.sp
-                    )
-                    val valueText = if (isValueVisible) "R$\u00A0${asset.walletValue}" else "R$\u00A0*****"
-
-                    Text(
-                        text = valueText,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.End,
-                        color = Color.Black,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.offset(y = (-2).dp)
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Setor
-                Column {
-                    Text(
-                        text = asset.titlePrice,
-                        fontSize = 9.sp,
-                        color = Color.Gray,
-                        lineHeight = 9.sp
-                    )
-                    Text(
-                        text = asset.price,
-                        fontSize = 14.sp,
-                        color = Color.Black,
-                        modifier = Modifier.offset(y = (-2).dp)
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = asset.titleNumberOfShares,
-                        fontSize = 9.sp,
-                        color = Color.Gray,
-                        lineHeight = 9.sp
-                    )
-                    val valueText = if (isValueVisible) "\u00A0${asset.numberOfShares}" else "\u00A0*****"
-
-                    Text(
-                        text = valueText,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.End,
-                        color = Color.Black,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.offset(y = (-2).dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DetailCard(
-    detail: PortfolioDetail,
-    subAssets: List<Asset>,
-    isValueVisible: Boolean
-) {
-    var isExpanded by remember { mutableStateOf(false) }
-    val cornerShape = RoundedCornerShape(8.dp)
-
-    val rotation by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-        label = "ArrowRotation"
-    )
-
-    // Calculamos o total do grupo (ex: Total de FIIs) para usar no cálculo da %
-    val groupTotalValue = remember(detail.value) { detail.value.parseMoney() }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(cornerShape)
-            .background(Color.LightGray.copy(alpha = 0.2f), cornerShape)
-    ) {
-        DetailHeader(
-            detail = detail,
-            isExpanded = isExpanded,
-            rotation = rotation,
-            isValueVisible = isValueVisible,
-            onClick = { isExpanded = !isExpanded }
-        )
-
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                // Header da Tabela (Título das colunas)
-                DetailSubAssetHeader()
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
-
-                // Linhas de Ativos
-                subAssets.forEach { asset ->
-                    DetailSubAssetRow(
-                        asset = asset,
-                        groupTotalValue = groupTotalValue, // Passamos o total do grupo
-                        isValueVisible = isValueVisible
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun DetailHeader(
-    detail: PortfolioDetail,
-    isExpanded: Boolean,
-    rotation: Float,
-    isValueVisible: Boolean,
-    onClick: () -> Unit
-) {
-    val cornerShape = RoundedCornerShape(8.dp)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(55.dp)
-            .background(detail.color, if (isExpanded) RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp) else cornerShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Percentual e Nome
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = detail.percentage,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = detail.name,
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val valueText = if (isValueVisible) "R$ ${detail.value}" else "R$ •••••••"
-                Text(
-                    text = valueText,
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .rotate(rotation) // Rotação da Seta
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DetailSubAssetHeader() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(modifier = Modifier.weight(0.7f)) {
-            Text("Perc. Equiv.", fontSize = 9.sp, color = Color.Gray, modifier = Modifier.weight(0.5f))
-            Text("Título", fontSize = 9.sp, color = Color.Gray, modifier = Modifier.weight(0.5f))
-        }
-
-        Row(modifier = Modifier.weight(0.8f)) {
-            Text("Cotação", fontSize = 9.sp, color = Color.Gray, modifier = Modifier.weight(1f))
-            Text(
-                "Total equivalente",
-                fontSize = 9.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun DetailSubAssetRow(
-    asset: Asset,
-    groupTotalValue: Double,
-    isValueVisible: Boolean
-) {
-    // 1. Calcular a porcentagem deste ativo em relação ao grupo
-    val assetValue = asset.walletValue.parseMoney()
-    val percentage = if (groupTotalValue > 0) (assetValue / groupTotalValue) * 100 else 0.0
-    val percentageText = "%.2f".format(percentage).replace(".", ",") + "%"
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(modifier = Modifier.weight(0.7f)) {
-            // Exibe a porcentagem calculada. NÃO ocultamos com isValueVisible.
-            Text(
-                text = percentageText,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.DarkGray,
-                modifier = Modifier.weight(0.5f)
-            )
-            Text(
-                text = asset.ticker,
-                fontSize = 12.sp,
-                color = Color.Black,
-                fontWeight = FontWeight.SemiBold,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1,
-                modifier = Modifier.weight(0.5f)
-            )
-        }
-
-        Row(modifier = Modifier.weight(0.8f)) {
-            Text(
-                text = asset.price,
-                fontSize = 12.sp,
-                color = Color.DarkGray,
-                modifier = Modifier.weight(1f)
-            )
-            // Aqui ocultamos o valor monetário se a visibilidade estiver desligada
-            val totalEquivalentText = if (isValueVisible) "R$ ${asset.walletValue}" else "R$ ••••••"
-            Text(
-                text = totalEquivalentText,
-                fontSize = 12.sp,
-                color = Color.Black,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun SimulatedPieChart(details: List<PortfolioDetail>, modifier: Modifier = Modifier) {
-    val totalPercentage = details.sumOf {
-        it.percentage.removeSuffix("%").replace(",", ".").toDoubleOrNull() ?: 0.0
-    }
-
-    val proportions = details.map {
-        (it.percentage.removeSuffix("%").replace(",", ".").toDoubleOrNull() ?: 0.0) / totalPercentage
-    }
-
-    Box(modifier = modifier.size(228.dp), contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            var startAngle = -90f
-            val strokeWidth = size.minDimension * 0.25f
-            val chartSize = size.minDimension - strokeWidth
-
-            proportions.forEachIndexed { index, proportion ->
-                val sweepAngle = (proportion * 360f).toFloat()
-
-                drawArc(
-                    color = details[index].color,
-                    startAngle = startAngle,
-                    sweepAngle = sweepAngle,
-                    useCenter = false,
-                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
-                    size = Size(chartSize, chartSize),
-                    style = Stroke(width = strokeWidth)
-                )
-                startAngle += sweepAngle
-            }
-        }
-
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            var startAngle = -30f
-            val strokeWidth = size.minDimension * 0.25f
-            val textRadius = (size.minDimension / 2) - (strokeWidth / 2)
-
-            val textPaint = android.graphics.Paint().apply {
-                color = android.graphics.Color.WHITE
-                textAlign = android.graphics.Paint.Align.CENTER
-                textSize = 12.sp.toPx()
-                typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-                isAntiAlias = true
-            }
-
-            val baseVerticalOffset = (textPaint.descent() + textPaint.ascent()) / 2f
-
-            proportions.forEachIndexed { index, proportion ->
-                val sweepAngle = (proportion * 360f).toFloat()
-                val midAngle = startAngle + sweepAngle / 2
-                val angleInRadians = Math.toRadians(midAngle.toDouble())
-
-                val x = (center.x + textRadius * cos(angleInRadians)).toFloat()
-                val y = (center.y + textRadius * sin(angleInRadians)).toFloat()
-
-                var normalizedAngle = midAngle % 360
-                if (normalizedAngle < 0) normalizedAngle += 360
-
-                val isBottomHalf = normalizedAngle > 90 && normalizedAngle < 270
-
-                var finalRotationAngle = midAngle + 90f
-                var finalYOffset = baseVerticalOffset
-
-                if (isBottomHalf) {
-                    finalRotationAngle += 180f
-                    finalYOffset = -baseVerticalOffset * 0.8f
-                }
-
-
-                drawContext.canvas.nativeCanvas.save()
-
-                drawContext.canvas.nativeCanvas.rotate(finalRotationAngle, x, y)
-
-                drawContext.canvas.nativeCanvas.drawText(
-                    details[index].percentage,
-                    x,
-                    y - finalYOffset, // Usa o offset corrigido
-                    textPaint
-                )
-
-                drawContext.canvas.nativeCanvas.restore()
-
-                startAngle += sweepAngle
-            }
-        }
-    }
-}
-
-@Composable
-fun ElevatedButton(
-    onClick: () -> Unit,
+fun BaseOutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    label: @Composable (() -> Unit)? = null,
+    placeholder: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    isError: Boolean = false,
+    readOnly: Boolean = false,
+    singleLine: Boolean = true,
     shape: Shape = RoundedCornerShape(8.dp),
-    colors: ButtonColors = ButtonDefaults.elevatedButtonColors(),
-    content: @Composable () -> Unit
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = Color(0xFF025B2F),
+        unfocusedBorderColor = Color.LightGray,
+        cursorColor = Color(0xFF025B2F),
+    ),
+    textStyle: TextStyle = TextStyle(
+        fontFamily = AlataFont,
+        fontSize = 16.sp,
+        color = MaterialTheme.colorScheme.onSurface
+    ),
 ) {
-    ElevatedButton(
-        onClick = onClick,
-        modifier = modifier,
-        shape = shape,
-        colors = colors,
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun SocialLoginButton(
-    onClick: () -> Unit,
-    text: String,
-    iconId: Int,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    AlataFont: androidx.compose.ui.text.font.FontFamily
-) {
-    OutlinedButton(
-        onClick = onClick,
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
             .height(54.dp),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(width = 1.dp, color = Color.Gray),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.White,
-            contentColor = Color.Black
-        )
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = iconId),
-                contentDescription = contentDescription,
-                modifier = Modifier.size(24.dp)
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Text(
-                text = text,
-                style = TextStyle(
-                    fontFamily = AlataFont,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal
-                ),
-            )
-        }
-    }
+        label = label,
+        placeholder = placeholder,
+        trailingIcon = trailingIcon,
+        leadingIcon = leadingIcon,
+        visualTransformation = visualTransformation,
+        keyboardOptions = keyboardOptions,
+        isError = isError,
+        readOnly = readOnly,
+        singleLine = singleLine,
+        shape = shape,
+        colors = colors,
+        textStyle = TextStyle(
+            fontFamily = AlataFont,
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        ),
+    )
 }
 
 @Composable
@@ -631,19 +168,10 @@ fun CustomOutlinedTextField(
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
-    OutlinedTextField(
+    BaseOutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        singleLine = true,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(54.dp),
-        shape = RoundedCornerShape(8.dp),
-        textStyle = TextStyle(
-            fontFamily = AlataFont,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        ),
+        modifier = modifier,
         keyboardOptions = keyboardOptions
     )
 }
@@ -654,11 +182,11 @@ fun EmailField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    CustomOutlinedTextField(
+    BaseOutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
     )
 }
 
@@ -667,40 +195,26 @@ fun PasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    AlataFont: androidx.compose.ui.text.font.FontFamily,
+    AlataFont: FontFamily,
     isError: Boolean = false
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 
-    OutlinedTextField(
+    BaseOutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        singleLine = true,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(54.dp),
-        shape = RoundedCornerShape(8.dp),
-        visualTransformation = if (passwordVisible)
-            VisualTransformation.None
-        else
-            PasswordVisualTransformation(),
+        modifier = modifier,
+        isError = isError,
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         trailingIcon = {
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                 Icon(
-                    imageVector =
-                        if (passwordVisible) Icons.Default.Visibility
-                        else Icons.Default.VisibilityOff,
+                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                     contentDescription = if (passwordVisible) "Ocultar senha" else "Mostrar senha"
                 )
             }
         },
-        isError = isError,
-        textStyle = TextStyle(
-            fontFamily = AlataFont,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        ),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
     )
 }
 
@@ -712,34 +226,21 @@ fun DateOfBirthField(
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    val year = calendar.get(Calendar.YEAR)
-    val month = calendar.get(Calendar.MONTH)
-    val day = calendar.get(Calendar.DAY_OF_MONTH)
-
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDay: Int ->
-            val selectedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
+            val selectedDate = String.format(Locale.getDefault(), "%02d/%02d/%d", selectedDay, selectedMonth + 1, selectedYear)
             onValueChange(selectedDate)
         },
-        year, month, day
+        calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-    OutlinedTextField(
+    BaseOutlinedTextField(
         value = value,
         onValueChange = {},
         readOnly = true,
-        placeholder = { Text("DD/MM/AAAA") },
-        modifier = modifier
-            .fillMaxWidth()
-            .height(54.dp)
-            .clickable { datePickerDialog.show() },
-        shape = RoundedCornerShape(8.dp),
-        textStyle = TextStyle(
-            fontFamily = AlataFont,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        ),
+        placeholder = { Text("DD/MM/AAAA", fontFamily = AlataFont, fontSize = 16.sp, color = Color.LightGray) },
+        modifier = modifier.clickable { datePickerDialog.show() },
         trailingIcon = {
             IconButton(onClick = { datePickerDialog.show() }) {
                 Icon(
@@ -835,7 +336,7 @@ fun PhoneNumberField(
 ) {
     val countryCode by remember { mutableStateOf("+55") }
 
-    OutlinedTextField(
+    BaseOutlinedTextField(
         value = value,
         onValueChange = { newValue ->
             val digitsOnly = newValue.filter { it.isDigit() }
@@ -843,23 +344,15 @@ fun PhoneNumberField(
                 if (digitsOnly.length > 11) digitsOnly.substring(0, 11) else digitsOnly
             onValueChange(trimmedDigits)
         },
-        label = { Text("Telefone") },
+        label = { Text("Telefone", fontFamily = AlataFont, fontSize = 16.sp) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
         visualTransformation = BrazilianPhoneVisualTransformation(maxDigits = 11),
-        singleLine = true,
-        modifier = modifier.fillMaxWidth(),
-        textStyle = TextStyle(
-            fontFamily = AlataFont,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        ),
-        shape = RoundedCornerShape(8.dp),
         leadingIcon = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .padding(start = 12.dp, end = 4.dp)
-                    .clickable { /* Ação para abrir o seletor de país (DropdownMenu) */ }
+                    .clickable {}
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.br_flag),
@@ -869,7 +362,7 @@ fun PhoneNumberField(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_down),
+                    painter = painterResource(id = R.drawable.ic_arrow_down), // Certifique-se que este recurso existe
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )
@@ -902,7 +395,7 @@ fun CpfField(
     modifier: Modifier = Modifier,
     isError: Boolean = false
 ) {
-    OutlinedTextField(
+    BaseOutlinedTextField(
         value = value,
         onValueChange = { newValue ->
             val digitsOnly = newValue.filter { it.isDigit() }
@@ -910,19 +403,12 @@ fun CpfField(
                 if (digitsOnly.length > 11) digitsOnly.substring(0, 11) else digitsOnly
             onValueChange(trimmedDigits)
         },
-        label = { Text("CPF") },
-        placeholder = { Text("___.___.___-__") },
+        label = { Text("CPF", fontFamily = AlataFont, fontSize = 16.sp) },
+        placeholder = { Text("___.___.___-__", fontFamily = AlataFont, fontSize = 16.sp, color = Color.LightGray) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         visualTransformation = CpfVisualTransformation(maxDigits = 11),
-        singleLine = true,
         isError = isError,
-        textStyle = TextStyle(
-            fontFamily = AlataFont,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        ),
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        modifier = modifier,
     )
 }
 
@@ -941,22 +427,20 @@ fun GenderSelectionField(
         onExpandedChange = { isExpanded = !isExpanded },
         modifier = modifier.fillMaxWidth()
     ) {
-        OutlinedTextField(
+        BaseOutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(),
             readOnly = true,
             value = value,
             onValueChange = {},
-            textStyle = TextStyle(
-                fontFamily = AlataFont,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            ),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded) },
             shape = RoundedCornerShape(8.dp),
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            singleLine = true
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFF025B2F),
+                unfocusedBorderColor = Color.LightGray,
+                cursorColor = Color(0xFF025B2F),
+            )
         )
 
         ExposedDropdownMenu(
@@ -965,7 +449,7 @@ fun GenderSelectionField(
         ) {
             genderOptions.forEach { selectionOption ->
                 DropdownMenuItem(
-                    text = { Text(selectionOption) },
+                    text = { Text(selectionOption, fontFamily = AlataFont) },
                     onClick = {
                         onValueChange(selectionOption)
                         isExpanded = false
@@ -975,4 +459,464 @@ fun GenderSelectionField(
             }
         }
     }
+}
+
+@Composable
+fun AssetCard(
+    asset: Asset,
+    isValueVisible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val valuationColor = if (asset.valuationLastDay.contains("-")) {
+        Color(0xFFFF5757)
+    } else {
+        BrightGreen
+    }
+
+    val cornerShape = RoundedCornerShape(12.dp)
+
+    Card(
+        modifier = modifier
+            .wrapContentHeight()
+            .padding(4.dp)
+            .border(1.dp, Color(0xFFE0E0E0), cornerShape),
+        shape = cornerShape,
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // --- LINHA 1: Ticker e Badge ---
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = asset.ticker,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = asset.valuationLastDay,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .background(valuationColor, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Rend. último ano",
+                    fontSize = 9.sp,
+                    color = Color.Gray,
+                    lineHeight = 9.sp
+                )
+                Text(
+                    text = asset.percentProfitPerYear,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.offset(y = (-2).dp)
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Tipo/Setor
+                Column {
+                    Text(
+                        text = asset.titleType,
+                        fontSize = 9.sp,
+                        color = Color.Gray,
+                        lineHeight = 9.sp
+                    )
+                    Text(
+                        text = asset.type,
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        modifier = Modifier.offset(y = (-2).dp)
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Valor em carteira",
+                        fontSize = 9.sp,
+                        color = Color.Gray,
+                        lineHeight = 9.sp
+                    )
+                    val valueText = if (isValueVisible) "R$\u00A0${asset.walletValue}" else "R$\u00A0*****"
+
+                    Text(
+                        text = valueText,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.End,
+                        color = Color.Black,
+                        fontWeight = FontWeight.SemiBold,
+                        // Ajustes para evitar overflow em valores grandes
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.offset(y = (-2).dp)
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Preço
+                Column {
+                    Text(
+                        text = asset.titlePrice,
+                        fontSize = 9.sp,
+                        color = Color.Gray,
+                        lineHeight = 9.sp
+                    )
+                    Text(
+                        text = asset.price,
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        modifier = Modifier.offset(y = (-2).dp)
+                    )
+                }
+
+                // Saldo (Quantidade de Cotas/Tokens)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = asset.titleNumberOfShares,
+                        fontSize = 9.sp,
+                        color = Color.Gray,
+                        lineHeight = 9.sp
+                    )
+                    val valueText = if (isValueVisible) "\u00A0${asset.numberOfShares}" else "\u00A0*****"
+
+                    Text(
+                        text = valueText,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.End,
+                        color = Color.Black,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.offset(y = (-2).dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DetailCard(
+    detail: PortfolioDetail,
+    subAssets: List<Asset>,
+    isValueVisible: Boolean
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val cornerShape = RoundedCornerShape(8.dp)
+
+    val rotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "ArrowRotation"
+    )
+
+    val groupTotalValue = remember(detail.value) { detail.value.parseMoney() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clip(cornerShape)
+            .background(Color.LightGray.copy(alpha = 0.2f), cornerShape)
+    ) {
+        DetailHeader(
+            detail = detail,
+            isExpanded = isExpanded,
+            rotation = rotation,
+            isValueVisible = isValueVisible,
+            onClick = { isExpanded = !isExpanded }
+        )
+
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                DetailSubAssetHeader()
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+
+                subAssets.forEach { asset ->
+                    DetailSubAssetRow(
+                        asset = asset,
+                        groupTotalValue = groupTotalValue,
+                        isValueVisible = isValueVisible
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun DetailHeader(
+    detail: PortfolioDetail,
+    isExpanded: Boolean,
+    rotation: Float,
+    isValueVisible: Boolean,
+    onClick: () -> Unit
+) {
+    val cornerShape = RoundedCornerShape(8.dp)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(55.dp)
+            .background(detail.color, if (isExpanded) RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp) else cornerShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Percentual e Nome
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = detail.percentage,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = detail.name,
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val valueText = if (isValueVisible) "R$ ${detail.value}" else "R$ •••••••"
+                Text(
+                    text = valueText,
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .rotate(rotation)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DetailSubAssetHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(modifier = Modifier.weight(0.7f)) {
+            Text("Perc. Equiv.", fontSize = 9.sp, color = Color.Gray, modifier = Modifier.weight(0.5f))
+            Text("Título", fontSize = 9.sp, color = Color.Gray, modifier = Modifier.weight(0.5f))
+        }
+
+        Row(modifier = Modifier.weight(0.8f)) {
+            Text("Cotação", fontSize = 9.sp, color = Color.Gray, modifier = Modifier.weight(1f))
+            Text(
+                "Total equivalente",
+                fontSize = 9.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+fun DetailSubAssetRow(
+    asset: Asset,
+    groupTotalValue: Double,
+    isValueVisible: Boolean
+) {
+    val assetValue = asset.walletValue.parseMoney()
+    val percentage = if (groupTotalValue > 0) (assetValue / groupTotalValue) * 100 else 0.0
+    val percentageText = "%.2f".format(percentage).replace(".", ",") + "%"
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(modifier = Modifier.weight(0.7f)) {
+            Text(
+                text = percentageText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.DarkGray,
+                modifier = Modifier.weight(0.5f)
+            )
+            Text(
+                text = asset.ticker,
+                fontSize = 12.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.SemiBold,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                modifier = Modifier.weight(0.5f)
+            )
+        }
+
+        Row(modifier = Modifier.weight(0.8f)) {
+            Text(
+                text = asset.price,
+                fontSize = 12.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.weight(1f)
+            )
+            val totalEquivalentText = if (isValueVisible) "R$ ${asset.walletValue}" else "R$ ••••••"
+            Text(
+                text = totalEquivalentText,
+                fontSize = 12.sp,
+                color = Color.Black,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+fun SimulatedPieChart(details: List<PortfolioDetail>, modifier: Modifier = Modifier) {
+}
+
+@Composable
+fun ElevatedButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(8.dp),
+    colors: ButtonColors = ButtonDefaults.elevatedButtonColors(),
+    content: @Composable () -> Unit
+) {
+    ElevatedButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = shape,
+        colors = colors,
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun SocialLoginButton(
+    onClick: () -> Unit,
+    text: String,
+    iconId: Int,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    AlataFont: FontFamily
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(54.dp),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(width = 1.dp, color = Color.Gray),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Color.White,
+            contentColor = Color.Black
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = iconId),
+                contentDescription = contentDescription,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Text(
+                text = text,
+                style = TextStyle(
+                    fontFamily = AlataFont,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal
+                ),
+            )
+        }
+    }
+}
+
+// Mapa estático de cores para ativos conhecidos
+private val TickerColorMap = mapOf(
+    // Cripto
+    "BTC" to Color(0xFFF7931A),
+    "ETH" to Color(0xFF627EEA),
+    "USDT" to Color(0xFF50AF95),
+    "USDC" to Color(0xFF2775CA),
+    "BNB" to Color(0xFFF3BA2F),
+    // FIIs (Exemplos)
+    "MXRF11" to Color(0xFF006D3E),
+    "CPTS11" to Color(0xFF304D8C),
+    "HGLG11" to Color(0xFF8D5353),
+    "GARE11" to Color(0xFFCC7000),
+    // Outros Tipos
+    "Papel" to Color(0xFF43A047),
+    "FIIs" to Color(0xFF304D8C)
+)
+
+fun getColorForTicker(ticker: String): Color {
+    if (TickerColorMap.containsKey(ticker)) {
+        return TickerColorMap.getValue(ticker)
+    }
+
+    val hashCode = ticker.hashCode()
+    val r = (hashCode and 0xFF0000) shr 16
+    val g = (hashCode and 0x00FF00) shr 8
+    val b = hashCode and 0x0000FF
+
+    val max = maxOf(r, g, b)
+    val min = minOf(r, g, b)
+
+    if (max < 150) {
+        return Color(r + 100, g + 100, b + 100)
+    }
+
+    return Color(r, g, b)
 }

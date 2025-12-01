@@ -15,6 +15,7 @@ foundationLayout = "1.9.5"
 navigationCompose = "2.9.6"
 foundation = "1.9.5"
 animationCoreLint = "1.9.5"
+firebaseFirestore = "25.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -39,6 +40,8 @@ androidx-foundation-layout = { group = "androidx.compose.foundation", name = "fo
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 androidx-animation-core-lint = { group = "androidx.compose.animation", name = "animation-core-lint", version.ref = "animationCoreLint" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestore" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

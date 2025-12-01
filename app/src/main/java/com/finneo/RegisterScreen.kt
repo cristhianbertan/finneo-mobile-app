@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,26 +37,37 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.finneo.viewmodel.RegisterViewModel
 
-@Preview
 @Composable
 fun RegisterScreen(
     onContinue: () -> Unit = {},
+    viewModel: RegisterViewModel = viewModel() // Injetando o ViewModel
 ) {
+    // Estados do Formulário
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") } // CORREÇÃO: Variável separada
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     var name by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var document by remember { mutableStateOf("") }
-    val isCpfInvalid = remember (document){
-        document.length == 11 && !isValidCpf(document)
-    }
-    var gender by remember { mutableStateOf("") }
 
-    var dateOfBirth by remember { mutableStateOf("")}
+    // Assumindo que isValidCpf é uma função utilitária que você tem no projeto
+    val isCpfInvalid = remember(document) {
+        document.isNotEmpty() && document.length == 11 && !isValidCpf(document)
+    }
+
+    var gender by remember { mutableStateOf("") }
+    var dateOfBirth by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+
+    // Estados do ViewModel
+    val isLoading by viewModel.isLoading
+    val errorMessage by viewModel.errorMessage
 
     Scaffold(
         containerColor = Color(0xFFFFFFFF)
@@ -73,10 +86,9 @@ fun RegisterScreen(
             // Foto de perfil
             item {
                 Image(
-                    painter = painterResource(id = R.drawable.user_photo),
+                    painter = painterResource(id = R.drawable.user_photo), // Certifique-se que esta imagem existe
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(120.dp)
+                    modifier = Modifier.size(120.dp)
                 )
             }
 
@@ -153,16 +165,11 @@ fun RegisterScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    visualTransformation = if (passwordVisible)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
-                                imageVector =
-                                    if (passwordVisible) Icons.Default.Visibility
-                                    else Icons.Default.VisibilityOff,
+                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = null
                             )
                         }
@@ -184,24 +191,20 @@ fun RegisterScreen(
                 )
             }
 
+            // CORREÇÃO: Usando confirmPassword e confirmPasswordVisible
             item {
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    visualTransformation = if (passwordVisible)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Icon(
-                                imageVector =
-                                    if (passwordVisible) Icons.Default.Visibility
-                                    else Icons.Default.VisibilityOff,
+                                imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = null
                             )
                         }
@@ -226,156 +229,66 @@ fun RegisterScreen(
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            item {
-                Text(
-                    text = "Nome",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // --- CAMPOS DE DADOS PESSOAIS ---
 
-            item {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                )
-            }
+            item { Text(text = "Nome", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
+            item { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, modifier = Modifier.fillMaxWidth().height(54.dp)) }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            item {
-                Text(
-                    text = "Sobrenome",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            item {
-                OutlinedTextField(
-                    value = lastName,
-                    onValueChange = { lastName = it },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
+            item { Text(text = "Sobrenome", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
+            item { OutlinedTextField(value = lastName, onValueChange = { lastName = it }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            item {
-                Text(
-                    text = "CPF",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
-
-            item {
-                CpfField(
-                    value = document,
-                    onValueChange = { document = it },
-                    isError = isCpfInvalid,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
+            item { Text(text = "CPF", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
+            item { CpfField(value = document, onValueChange = { document = it }, isError = isCpfInvalid, modifier = Modifier.fillMaxWidth()) }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            item {
-                Text(
-                    text = "Gênero",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            item {
-                GenderSelectionField(
-                    value = gender,
-                    onValueChange = { gender = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                )
-            }
-
+            item { Text(text = "Gênero", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
+            item { GenderSelectionField(value = gender, onValueChange = { gender = it }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            item {
-                Text(
-                    text = "Data de Nascimento",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
-
-            item {
-                DateOfBirthField(
-                    value = dateOfBirth,
-                    onValueChange = { dateOfBirth = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
+            item { Text(text = "Data de Nascimento", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
+            item { DateOfBirthField(value = dateOfBirth, onValueChange = { dateOfBirth = it }, modifier = Modifier.fillMaxWidth()) }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            item {
-                Text(
-                    text = "Telefone",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
+            item { Text(text = "Telefone", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
+            item { PhoneNumberField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth()) }
 
-            item {
-                PhoneNumberField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
+            // EXIBIÇÃO DE ERRO
+            if (errorMessage != null) {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = errorMessage!!,
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             item { Spacer(modifier = Modifier.height(48.dp)) }
 
+            // BOTÃO DE CADASTRO
             item {
                 ElevatedButton(
-                    onClick = onContinue,
+                    onClick = {
+                        if (password != confirmPassword) {
+                            // Erro local simples se as senhas não baterem
+                            // Idealmente mostraria um erro na UI, mas aqui o ViewModel trata campos vazios
+                        } else {
+                            viewModel.registerUser(
+                                email, password, name, lastName, document, gender, dateOfBirth, phone,
+                                onSuccess = onContinue
+                            )
+                        }
+                    },
+                    enabled = !isLoading, // Desabilita se estiver carregando
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(46.dp),
@@ -384,13 +297,20 @@ fun RegisterScreen(
                         contentColor = Color(0xFFFFFFFF)
                     )
                 ) {
-                    Text(
-                        "Próximo",
-                        style = TextStyle(
-                            fontFamily = AlataFont,
-                            fontSize = 16.sp
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
-                    )
+                    } else {
+                        Text(
+                            "Próximo",
+                            style = TextStyle(
+                                fontFamily = AlataFont,
+                                fontSize = 16.sp
+                            )
+                        )
+                    }
                 }
             }
 

@@ -3,163 +3,108 @@ package com.finneo
 import AlataFont
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel // Importante
+import com.finneo.viewmodel.LoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview
 fun LoginSectionPassword(
-    email: String = "cr****@gmail.com",
-    onContinue: () -> Unit = {},
+    viewModel: LoginViewModel = viewModel(), // Usa o mesmo ViewModel da tela anterior (se escopado corretamente no NavHost)
+    onLoginSuccess: () -> Unit = {}, // Vai para a Home
     onForgotPassword: () -> Unit = {},
     onBack: () -> Unit = {}
 ) {
-    var emailState by remember { mutableStateOf(email) }
+    val email by viewModel.email
+    val isLoading by viewModel.isLoading
+    val loginError by viewModel.loginError
+
     var password by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
 
-    Scaffold (
+    // Limpa erros ao entrar na tela
+    LaunchedEffect(Unit) {
+        viewModel.clearError()
+    }
+
+    // Máscara simples para o email (ex: cr****@gmail.com)
+    val maskedEmail = remember(email) {
+        if (email.contains("@")) {
+            val parts = email.split("@")
+            if (parts[0].length > 2) {
+                "${parts[0].take(2)}****@${parts[1]}"
+            } else email
+        } else email
+    }
+
+    Scaffold(
         containerColor = Color(0xFFFFFFFF),
         topBar = {
             TopAppBar(
-                modifier = Modifier
-                    .padding(top = 40.dp)
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.padding(top = 40.dp).padding(horizontal = 16.dp),
                 title = { },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Box(
-                            modifier = Modifier
-                                .size(30.dp)
-                                .background(
-                                    color = Color(0xFF025B2F),
-                                    shape = RoundedCornerShape(8.dp)
-                                ),
+                            modifier = Modifier.size(30.dp).background(Color(0xFF025B2F), RoundedCornerShape(8.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Voltar",
-                                tint = Color.White
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", tint = Color.White)
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
-    ){ padding ->
+    ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 30.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_finneo),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(120.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-
+            Image(painter = painterResource(id = R.drawable.logo_finneo), contentDescription = null, modifier = Modifier.size(120.dp))
             Spacer(modifier = Modifier.height(40.dp))
 
-            Text(
-                text = "Insira a sua senha",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontFamily = AlataFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 4.dp)
-                    .align(Alignment.Start)
-            )
-
+            Text("Insira a sua senha", style = MaterialTheme.typography.headlineSmall.copy(fontFamily = AlataFont, fontWeight = FontWeight.Bold, fontSize = 24.sp), modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
 
-            //Email mascarado
-            Text(
-                modifier = Modifier.align(Alignment.Start),
-                text = emailState,
-                style = TextStyle(
-                    fontFamily = AlataFont,
-                    fontSize = 16.sp,
-                )
-            )
-
+            // Mostra o email mascarado (vindo do ViewModel)
+            Text(text = maskedEmail, style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp), modifier = Modifier.align(Alignment.Start))
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text(
-                text = "Senha",
-                style = TextStyle(
-                    fontFamily = AlataFont,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Text("Senha", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth())
 
             PasswordField(
                 value = password,
                 onValueChange = {
                     password = it
-                    if (isError) isError = false
+                    isError = false
                 },
                 modifier = Modifier.fillMaxWidth(),
                 AlataFont = AlataFont,
-                isError = isError
+                isError = isError || loginError != null // Mostra erro se local ou do firebase
             )
 
-            if (isError) {
+            // Mensagem de erro do Firebase ou Validação Local
+            if (isError || loginError != null) {
                 Text(
-                    text = "Por favor, insira sua senha",
+                    text = loginError ?: "Por favor, insira sua senha",
                     color = Color.Red,
                     fontSize = 12.sp,
                     fontFamily = AlataFont,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp, start = 4.dp)
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, start = 4.dp)
                 )
             }
 
@@ -170,40 +115,26 @@ fun LoginSectionPassword(
                     if (password.isEmpty()) {
                         isError = true
                     } else {
-                        isError = false
-                        onContinue()
+                        // CHAMA O LOGIN NO VIEWMODEL
+                        viewModel.loginWithEmailPassword(password, onSuccess = onLoginSuccess)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp),
+                enabled = !isLoading, // Desabilita botão se estiver carregando
+                modifier = Modifier.fillMaxWidth().height(46.dp),
                 shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.elevatedButtonColors(
-                    containerColor = Color(0xFF025B2F),
-                    contentColor = Color(0xFFFFFFFF)
-                )
+                colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF025B2F), contentColor = Color(0xFFFFFFFF))
             ) {
-                Text(
-                    "Continuar",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp
-                    )
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Continuar", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp))
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextButton(
-                onClick = onForgotPassword,
-                modifier = Modifier.align(Alignment.Start)
-            ) {
-                Text("Esqueceu a senha?",
-                    style = TextStyle(
-                        fontFamily = AlataFont,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface)
-                )
+            TextButton(onClick = onForgotPassword, modifier = Modifier.align(Alignment.Start)) {
+                Text("Esqueceu a senha?", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface))
             }
         }
     }
