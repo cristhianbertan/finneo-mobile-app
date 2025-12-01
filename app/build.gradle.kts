@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -37,12 +38,14 @@ android {
     buildFeatures {
         compose = true
     }
+    buildToolsVersion = "36.1.0"
 }
 
 dependencies {
-    implementation("androidx.compose.material3:material3:1.3.2")
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+    implementation("com.google.android.gms:play-services-auth")
+    implementation("com.google.firebase:firebase-auth")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("com.google.accompanist:accompanist-systemuicontroller:0.27.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -51,7 +54,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.material3)
     implementation(libs.androidx.ui.text)
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.navigation.compose)

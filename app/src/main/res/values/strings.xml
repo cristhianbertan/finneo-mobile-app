@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Finneo</string>
+
+    <string name="default_web_client_id">
+        188772289294-9gsjdr69c4pdmr8df0f2undqsg1ds832.apps.googleusercontent.com
+    </string>
 </resources>
