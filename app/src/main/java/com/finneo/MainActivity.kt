@@ -18,6 +18,8 @@ import androidx.navigation.compose.rememberNavController
 import com.finneo.ui.theme.FinneoTheme
 import com.finneo.viewmodel.LoginViewModel
 import com.finneo.viewmodel.WalletViewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +54,7 @@ fun AppNav() {
 
     NavHost(
         navController = navController,
-        startDestination = "email" // Tela inicial de Login
+        startDestination = "email"
     ) {
 
         composable("email") {
@@ -60,7 +62,7 @@ fun AppNav() {
                 viewModel = loginViewModel,
                 onContinue = { navController.navigate("password") },
                 onLoginGoogleSuccess = {
-                    navController.navigate("home") { popUpTo("email") { inclusive = true } }
+                    navController.navigate("home?startTab=0") { popUpTo("email") { inclusive = true } }
                 },
                 onNotHaveAccount = { navController.navigate("register") }
             )
@@ -70,7 +72,7 @@ fun AppNav() {
             LoginSectionPassword (
                 viewModel = loginViewModel,
                 onLoginSuccess = {
-                    navController.navigate("home") { popUpTo("email") { inclusive = true } }
+                    navController.navigate("home?startTab=0") { popUpTo("email") { inclusive = true } }
                 },
                 onBack = { navController.popBackStack() },
                 onForgotPassword = { navController.navigate("forgot_password") }
@@ -80,15 +82,23 @@ fun AppNav() {
         composable("register") {
             RegisterScreen (
                 onContinue = {
-                    navController.navigate("home") { popUpTo("email") { inclusive = true } }
+                    navController.navigate("home?startTab=0") { popUpTo("email") { inclusive = true } }
                 }
             )
         }
 
-        composable("home") {
+        composable(
+            route = "home?startTab={startTab}",
+            arguments = listOf(navArgument("startTab") {
+                defaultValue = 0 // Padrão: Fiduciário
+                type = NavType.IntType
+            })
+        ) { backStackEntry ->
+            val startTab = backStackEntry.arguments?.getInt("startTab") ?: 0
             HomeScreen(
                 navController = navController,
-                viewModel = walletViewModel
+                viewModel = walletViewModel,
+                startTab = startTab
             )
         }
 
@@ -97,7 +107,7 @@ fun AppNav() {
                 navController = navController,
                 onAddWalletClick = { address ->
                     walletViewModel.saveWalletToFirebase(address) {
-                        navController.navigate("home") {
+                        navController.navigate("home?startTab=1") {
                             popUpTo("home") { inclusive = true }
                         }
                     }
@@ -109,7 +119,6 @@ fun AppNav() {
             ShareScreen(
                 navController = navController,
                 onShareProceed = { selectedOption ->
-                    // 1. Chame a função que serializa os dados (no WalletViewModel)
                     val jsonToShare = walletViewModel.generateShareableData(selectedOption, fiduciaryAssets)
 
                     val encodedJson = java.net.URLEncoder.encode(jsonToShare, "UTF-8")

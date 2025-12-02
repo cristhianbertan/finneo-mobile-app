@@ -34,7 +34,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,12 +42,12 @@ import com.finneo.viewmodel.RegisterViewModel
 @Composable
 fun RegisterScreen(
     onContinue: () -> Unit = {},
-    viewModel: RegisterViewModel = viewModel() // Injetando o ViewModel
+    viewModel: RegisterViewModel = viewModel()
 ) {
     // Estados do Formulário
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") } // CORREÇÃO: Variável separada
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
@@ -56,7 +55,6 @@ fun RegisterScreen(
     var lastName by remember { mutableStateOf("") }
     var document by remember { mutableStateOf("") }
 
-    // Assumindo que isValidCpf é uma função utilitária que você tem no projeto
     val isCpfInvalid = remember(document) {
         document.isNotEmpty() && document.length == 11 && !isValidCpf(document)
     }
@@ -83,10 +81,9 @@ fun RegisterScreen(
 
             item { Spacer(modifier = Modifier.height(60.dp)) }
 
-            // Foto de perfil
             item {
                 Image(
-                    painter = painterResource(id = R.drawable.user_photo), // Certifique-se que esta imagem existe
+                    painter = painterResource(id = R.drawable.user_photo),
                     contentDescription = null,
                     modifier = Modifier.size(120.dp)
                 )
@@ -191,7 +188,6 @@ fun RegisterScreen(
                 )
             }
 
-            // CORREÇÃO: Usando confirmPassword e confirmPasswordVisible
             item {
                 OutlinedTextField(
                     value = confirmPassword,
@@ -229,8 +225,6 @@ fun RegisterScreen(
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            // --- CAMPOS DE DADOS PESSOAIS ---
-
             item { Text(text = "Nome", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
             item { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, modifier = Modifier.fillMaxWidth().height(54.dp)) }
 
@@ -259,7 +253,6 @@ fun RegisterScreen(
             item { Text(text = "Telefone", style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface), modifier = Modifier.fillMaxWidth()) }
             item { PhoneNumberField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth()) }
 
-            // EXIBIÇÃO DE ERRO
             if (errorMessage != null) {
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -279,8 +272,6 @@ fun RegisterScreen(
                 ElevatedButton(
                     onClick = {
                         if (password != confirmPassword) {
-                            // Erro local simples se as senhas não baterem
-                            // Idealmente mostraria um erro na UI, mas aqui o ViewModel trata campos vazios
                         } else {
                             viewModel.registerUser(
                                 email, password, name, lastName, document, gender, dateOfBirth, phone,

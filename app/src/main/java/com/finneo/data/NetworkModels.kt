@@ -19,5 +19,12 @@ data class TokenItem(
     @SerializedName("quote") val quote: Double?,
     @SerializedName("quote_rate") val quoteRate: Double?,
     @SerializedName("balance") val balance: String,
-    @SerializedName("contract_decimals") val contractDecimals: Int
+    @SerializedName("contract_decimals") val contractDecimals: Int,
+    var networkName: String? = null
+)
+
+data class WalletItem(
+    val id: String,
+    val address: String,
+    val type: String
 )

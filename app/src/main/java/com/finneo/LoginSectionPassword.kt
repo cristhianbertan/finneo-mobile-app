@@ -17,13 +17,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel // Importante
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.finneo.viewmodel.LoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginSectionPassword(
-    viewModel: LoginViewModel = viewModel(), // Usa o mesmo ViewModel da tela anterior (se escopado corretamente no NavHost)
+    viewModel: LoginViewModel = viewModel(),
     onLoginSuccess: () -> Unit = {}, // Vai para a Home
     onForgotPassword: () -> Unit = {},
     onBack: () -> Unit = {}
@@ -35,12 +35,10 @@ fun LoginSectionPassword(
     var password by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
 
-    // Limpa erros ao entrar na tela
     LaunchedEffect(Unit) {
         viewModel.clearError()
     }
 
-    // Máscara simples para o email (ex: cr****@gmail.com)
     val maskedEmail = remember(email) {
         if (email.contains("@")) {
             val parts = email.split("@")
@@ -80,7 +78,6 @@ fun LoginSectionPassword(
             Text("Insira a sua senha", style = MaterialTheme.typography.headlineSmall.copy(fontFamily = AlataFont, fontWeight = FontWeight.Bold, fontSize = 24.sp), modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Mostra o email mascarado (vindo do ViewModel)
             Text(text = maskedEmail, style = TextStyle(fontFamily = AlataFont, fontSize = 16.sp), modifier = Modifier.align(Alignment.Start))
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -94,10 +91,9 @@ fun LoginSectionPassword(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 AlataFont = AlataFont,
-                isError = isError || loginError != null // Mostra erro se local ou do firebase
+                isError = isError || loginError != null
             )
 
-            // Mensagem de erro do Firebase ou Validação Local
             if (isError || loginError != null) {
                 Text(
                     text = loginError ?: "Por favor, insira sua senha",
@@ -115,11 +111,10 @@ fun LoginSectionPassword(
                     if (password.isEmpty()) {
                         isError = true
                     } else {
-                        // CHAMA O LOGIN NO VIEWMODEL
                         viewModel.loginWithEmailPassword(password, onSuccess = onLoginSuccess)
                     }
                 },
-                enabled = !isLoading, // Desabilita botão se estiver carregando
+                enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth().height(46.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF025B2F), contentColor = Color(0xFFFFFFFF))

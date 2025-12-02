@@ -31,19 +31,18 @@ import com.google.firebase.auth.GoogleAuthProvider
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginSectionEmail(
-    viewModel: LoginViewModel = viewModel(), // Injeta o ViewModel
-    onContinue: () -> Unit = {}, // Navega para a tela de Senha
+    viewModel: LoginViewModel = viewModel(),
+    onContinue: () -> Unit = {},
     onNotHaveAccount: () -> Unit = {},
-    onLoginGoogleSuccess: () -> Unit = {} // Navega para a Home
+    onLoginGoogleSuccess: () -> Unit = {}
 ) {
-    val email by viewModel.email // Observa o email do ViewModel
+    val email by viewModel.email
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
 
-    // --- GOOGLE SIGN IN ---
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(R.string.default_web_client_id)) // Certifique-se que este ID está no strings.xml
+            .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
     }
@@ -70,7 +69,6 @@ fun LoginSectionEmail(
             Log.e("LOGIN", "Erro no Google SignIn: $e")
         }
     }
-    // ---------------------
 
     Scaffold(
         containerColor = Color(0xFFFFFFFF),
@@ -106,7 +104,6 @@ fun LoginSectionEmail(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Input conectado ao ViewModel
             CustomOutlinedTextField(
                 value = email,
                 onValueChange = { viewModel.onEmailChange(it) },
@@ -117,7 +114,6 @@ fun LoginSectionEmail(
 
             ElevatedButton(
                 onClick = {
-                    // Validação simples antes de ir para a senha
                     if (email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                         onContinue() // Vai para LoginSectionPassword
                     }
@@ -147,7 +143,6 @@ fun LoginSectionEmail(
                 }
             }
 
-            // ... (Botão Passkey e Criar conta mantidos)
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(

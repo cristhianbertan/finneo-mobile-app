@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.finneo.data.WalletItem
 import com.finneo.ui.theme.AlataFont
 import com.finneo.ui.theme.BrightGreen
 import com.finneo.ui.theme.DarkGreen
@@ -38,6 +40,12 @@ fun String.parseCurrency(): Double {
         .replace("$", "")
         .trim()
         .replace(".", "")
+        .replace(",", ".")
+        .toDoubleOrNull() ?: 0.0
+}
+
+fun String.parseShares(): Double {
+    return this.replace(".", "")
         .replace(",", ".")
         .toDoubleOrNull() ?: 0.0
 }
@@ -58,16 +66,16 @@ fun Double.formatPercent(): String {
 @Composable
 fun HomeScreen(
     navController: NavController,
-    viewModel: WalletViewModel = viewModel()
+    viewModel: WalletViewModel = viewModel(),
+    startTab: Int = 0
 ) {
     val apiAssets by viewModel.assets
     val isLoading by viewModel.isLoading
     val walletAddress by viewModel.walletAddress
 
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(startTab) }
     var isValueVisible by remember { mutableStateOf(false) }
 
-    // NOVO ESTADO: Controle do Pop-up de Compartilhamento
     var showSharePopup by remember { mutableStateOf(false) }
 
     val fiduciaryAssets = remember {
@@ -84,29 +92,37 @@ fun HomeScreen(
             emptyList()
         } else {
             val totalValue = currentAssets.sumOf { it.walletValue.parseCurrency() }
-            currentAssets.groupBy { it.ticker }.map { (ticker, assets) ->
-                val groupValue = assets.sumOf { it.walletValue.parseCurrency() }
-                val perc = if (totalValue > 0) (groupValue / totalValue) * 100 else 0.0
 
-                PortfolioDetail(
-                    percentage = perc.formatPercent(),
-                    name = ticker,
-                    value = groupValue.formatCurrency(),
-                    color = getColorForTicker(ticker)
-                )
-            }.toList()
-                .take(6)
+            currentAssets.groupBy { it.ticker }
+                .map { (ticker, assets) ->
+                    object {
+                        val ticker = ticker
+                        val assets = assets
+                        val groupValue = assets.sumOf { it.walletValue.parseCurrency() }
+                        val totalShares = assets.sumOf { it.numberOfShares.parseShares() }
+                    }
+                }
+                .sortedByDescending { it.totalShares }
+                .take(5)
+                .map { groupedAsset ->
+                    val perc = if (totalValue > 0) (groupedAsset.groupValue / totalValue) * 100 else 0.0
+
+                    PortfolioDetail(
+                        percentage = perc.formatPercent(),
+                        name = groupedAsset.ticker,
+                        value = groupedAsset.groupValue.formatCurrency(),
+                        color = getColorForTicker(groupedAsset.ticker)
+                    )
+                }
         }
     }
 
-    // Cálculo do Total Geral
     val currentTotalNumeric = remember(currentAssets) {
         currentAssets.sumOf { it.walletValue.parseCurrency() }
     }
     val currentTotal = currentTotalNumeric.formatCurrency()
     val currentTitle = if (selectedTab == 0) "Resumo dos investimentos fiduciários" else "Resumo dos criptoativos"
 
-    // Inputs para o gráfico
     val pieChartInputs = remember(currentDetails) {
         currentDetails.map { detail ->
             val value = detail.percentage
@@ -302,7 +318,7 @@ fun HomeScreen(
                                 "Personalize conforme o seu interesse!",
                                 color = Color.White,
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 fontFamily = LeagueSpartanFont
                             )
                             Box(
@@ -320,7 +336,6 @@ fun HomeScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-
 
                 // Cards dos ativos
                 items(currentAssets.chunked(2).size) { rowIndex ->
@@ -352,7 +367,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Gráfico
                 if (currentAssets.isNotEmpty()) {
                     item {
                         Spacer(modifier = Modifier.height(24.dp))
@@ -383,7 +397,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Detalhamento
                 if (currentAssets.isNotEmpty()) {
                     item {
                         Text(
@@ -397,7 +410,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         currentDetails.forEach { detail ->
-                            val subAssets = currentAssets.filter { it.ticker == detail.name || it.type == detail.name }
+                            val subAssets = currentAssets.filter { it.ticker == detail.name }
                             DetailCard(
                                 detail = detail,
                                 subAssets = subAssets,
@@ -408,9 +421,9 @@ fun HomeScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(32.dp)) // Espaço após o detalhamento
+                    Spacer(modifier = Modifier.height(32.dp))
                     ElevatedButton(
-                        onClick = { navController.navigate("share_screen") }, // Navega para a ShareScreen
+                        onClick = { navController.navigate("share_screen") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(46.dp)
@@ -418,21 +431,60 @@ fun HomeScreen(
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.elevatedButtonColors(
                             containerColor = BrightGreen,
-                            contentColor = Color.White
+                            contentColor = Color.Black
                         ),
                         elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 6.dp)
                     ) {
                         Text(
                             "Compartilhar Carteira",
-                            color = Color.White,
+                            color = Color.Black,
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             fontFamily = LeagueSpartanFont
                         )
                     }
                     Spacer(modifier = Modifier.height(32.dp))
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun WalletItemRow(
+    wallet: WalletItem,
+    onRemoveClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.LightGray.copy(alpha = 0.2f))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = wallet.type,
+                style = TextStyle(fontSize = 12.sp, color = DarkGreen, fontFamily = LeagueSpartanFont)
+            )
+            val shortAddress = wallet.address.take(6) + "..." + wallet.address.takeLast(4)
+            Text(
+                text = shortAddress,
+                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, fontFamily = AlataFont)
+            )
+        }
+
+        IconButton(
+            onClick = onRemoveClick,
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                Icons.Default.Delete,
+                contentDescription = "Remover carteira",
+                tint = Color.Red
+            )
         }
     }
 }

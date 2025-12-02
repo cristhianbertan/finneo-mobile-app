@@ -25,12 +25,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import com.finneo.ShareOption
 
 
 @Composable
 fun ShareOptionsPopup(
-    initialSelection: Int, // 0 = Fiduciário, 1 = Cripto (Mantido para saber qual aba ativou)
+    initialSelection: Int, // 0 = Fiduciário, 1 = Cripto
     onDismiss: () -> Unit,
     onProceed: (ShareOption) -> Unit
 ) {
@@ -98,7 +97,6 @@ fun ShareOptionsPopup(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 ElevatedButton(
-                    // Só permite Prosseguir se alguma opção estiver selecionada
                     onClick = { currentShareOption?.let(onProceed) },
                     enabled = currentShareOption != null,
                     modifier = Modifier

@@ -13,6 +13,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
+import com.finneo.data.WalletItem
 
 class WalletViewModel : ViewModel() {
     private val repository = CryptoRepository()
@@ -28,6 +29,9 @@ class WalletViewModel : ViewModel() {
     private val _walletAddress = mutableStateOf("")
     val walletAddress: State<String> = _walletAddress
 
+    private val _allWallets = mutableStateOf<List<WalletItem>>(emptyList())
+    val allWallets: State<List<WalletItem>> = _allWallets
+
     fun onWalletAddressChange(newAddress: String) {
         _walletAddress.value = newAddress
     }
@@ -36,29 +40,97 @@ class WalletViewModel : ViewModel() {
         val userId = auth.currentUser?.uid ?: return
         if (address.isBlank()) return
 
-        Log.d("WalletVM", "Iniciando salvamento da carteira: $address")
+        Log.d("WalletVM", "Iniciando verificação e salvamento da carteira: $address")
         _isLoading.value = true
 
-        val walletData = hashMapOf(
-            "address" to address,
-            "createdAt" to FieldValue.serverTimestamp(),
-            "type" to "EVM"
-        )
+        val walletRef = db.collection("users").document(userId).collection("wallets")
 
-        db.collection("users").document(userId).collection("wallets")
-            .add(walletData)
-            .addOnSuccessListener {
-                Log.d("WalletVM", "Carteira salva com sucesso no Firestore. ID: ${it.id}")
-                onWalletAddressChange(address) // 1. Atualiza o estado
+        walletRef
+            .whereEqualTo("address", address)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    Log.w("WalletVM", "Carteira já está cadastrada: $address")
 
-                fetchWalletData()
+                    _isLoading.value = false
+                    onSuccess()
+                    return@addOnSuccessListener
+                }
 
-                _isLoading.value = false
-                onSuccess()
+                val walletData = hashMapOf(
+                    "address" to address,
+                    "createdAt" to FieldValue.serverTimestamp(),
+                    "type" to "EVM"
+                )
+
+                walletRef
+                    .add(walletData)
+                    .addOnSuccessListener {
+                        Log.d("WalletVM", "Carteira salva com sucesso no Firestore. ID: ${it.id}")
+                        onWalletAddressChange(address)
+
+                        fetchWalletData()
+                        fetchAllWallets()
+
+                        _isLoading.value = false
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("WalletVM", "ERRO ao salvar carteira: ${e.message}")
+                        _isLoading.value = false
+                    }
             }
             .addOnFailureListener { e ->
-                Log.e("WalletVM", "ERRO ao salvar carteira: ${e.message}")
+                Log.e("WalletVM", "ERRO ao verificar duplicidade: ${e.message}")
                 _isLoading.value = false
+            }
+    }
+
+
+    fun fetchAllWallets() {
+        val userId = auth.currentUser?.uid ?: return
+
+        db.collection("users").document(userId).collection("wallets")
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val wallets = querySnapshot.documents.mapNotNull { document ->
+                    val address = document.getString("address")
+                    val type = document.getString("type")
+                    if (address != null && type != null) {
+                        WalletItem(
+                            id = document.id,
+                            address = address,
+                            type = type
+                        )
+                    } else {
+                        null
+                    }
+                }
+                _allWallets.value = wallets
+            }
+            .addOnFailureListener { e ->
+                Log.e("WalletVM", "ERRO ao buscar carteiras: ${e.message}")
+                _allWallets.value = emptyList()
+            }
+    }
+
+    fun removeWallet(walletId: String) {
+        val userId = auth.currentUser?.uid ?: return
+
+        db.collection("users").document(userId).collection("wallets").document(walletId)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("WalletVM", "Carteira removida com sucesso. ID: $walletId")
+
+                fetchAllWallets()
+
+                val removedAddress = _allWallets.value.find { it.id == walletId }?.address
+                if (_walletAddress.value == removedAddress) {
+                    onWalletAddressChange("")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("WalletVM", "ERRO ao remover carteira: ${e.message}")
             }
     }
 
@@ -91,11 +163,10 @@ class WalletViewModel : ViewModel() {
     }
 
     fun generateShareableData(option: ShareOption, fiduciaryAssets: List<Asset>): String {
-
         val assetsToShare = when (option) {
             is ShareOption.Crypto -> assets.value
             is ShareOption.Fiduciary -> fiduciaryAssets
-            is ShareOption.Both -> assets.value + fiduciaryAssets // Junta as duas listas
+            is ShareOption.Both -> assets.value + fiduciaryAssets
         }
 
         val shareableAssets = assetsToShare.map { asset ->

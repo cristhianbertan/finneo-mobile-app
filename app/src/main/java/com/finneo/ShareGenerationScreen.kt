@@ -1,5 +1,3 @@
-// Em ShareGenerationScreen.kt (ou no mesmo arquivo que contém o ShareScreen)
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -16,13 +14,11 @@ import com.google.zxing.qrcode.QRCodeWriter
 import android.util.Log
 import androidx.compose.ui.text.style.TextAlign
 
-// (Reutilize a função generateQRCodeBitmap que forneci anteriormente)
 fun generateQRCodeBitmap(text: String): Bitmap? {
     try {
         val size = 512
         val bits = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, size, size)
 
-        // CORREÇÃO: Especificar Bitmap.Config.ARGB_8888 no createBitmap
         return Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).apply {
             for (x in 0 until size) {
                 for (y in 0 until size) {
@@ -41,7 +37,7 @@ fun generateQRCodeBitmap(text: String): Bitmap? {
 @Composable
 fun ShareGenerationScreen(
     navController: NavController,
-    shareDataJson: String // Dados JSON decodificados da navegação
+    shareDataJson: String
 ) {
     val uniqueLink = remember {
         if (shareDataJson.length < 5) {
@@ -51,7 +47,6 @@ fun ShareGenerationScreen(
         }
     }
 
-    // 2. Geração do QR Code
     val qrCodeBitmap by remember(uniqueLink) {
         mutableStateOf(generateQRCodeBitmap(uniqueLink))
     }
@@ -86,7 +81,6 @@ fun ShareGenerationScreen(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            // Texto informativo sobre o QR Code
             Text(
                 "Este QR Code contém as proporções dos seus ativos. Ele pode ser lido por qualquer scanner.",
                 textAlign = TextAlign.Center,
@@ -95,7 +89,6 @@ fun ShareGenerationScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Botão nativo para salvar/compartilhar
             Button(onClick = {  }) {
                 Text("Compartilhar Imagem")
             }

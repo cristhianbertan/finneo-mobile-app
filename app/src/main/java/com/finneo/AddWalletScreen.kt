@@ -22,15 +22,16 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.finneo.ui.theme.AlataFont
 import com.finneo.ui.theme.BrightGreen
 import com.finneo.ui.theme.DarkGreen
 import com.finneo.ui.theme.LeagueSpartanFont
+import com.finneo.viewmodel.WalletViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,11 +39,15 @@ fun AddWalletScreen(
     navController: NavController,
     onAddWalletClick: (String) -> Unit = {}
 ) {
-    // Estado para a barra de pesquisa superior (serviços)
-    var searchText by remember { mutableStateOf("") }
+    val walletViewModel: WalletViewModel = viewModel()
+    val allWallets by walletViewModel.allWallets
 
-    // NOVO ESTADO: Endereço da carteira para o campo inferior
+    var searchText by remember { mutableStateOf("") }
     var walletInput by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        walletViewModel.fetchAllWallets()
+    }
 
     Scaffold(
         containerColor = Color.White,
@@ -123,7 +128,6 @@ fun AddWalletScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Campo de Pesquisa Superior
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { searchText = it },
@@ -173,9 +177,6 @@ fun AddWalletScreen(
 
             Spacer(modifier = Modifier.height(50.dp))
 
-            // --- NOVO CAMPO SOLICITADO ---
-
-            // Label
             Text(
                 text = "Endereço da carteira",
                 style = TextStyle(
@@ -189,7 +190,6 @@ fun AddWalletScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Input Field (Estilo Customizado igual ao padrão do app)
             OutlinedTextField(
                 value = walletInput,
                 onValueChange = { walletInput = it },
@@ -206,14 +206,14 @@ fun AddWalletScreen(
                 ),
                 singleLine = true
             )
-            // -----------------------------
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botão de Ação
             ElevatedButton(
-                // Aqui passamos o valor do NOVO campo (walletInput) para ser salvo
-                onClick = { onAddWalletClick(walletInput) },
+                onClick = {
+                    onAddWalletClick(walletInput)
+                    walletInput = ""
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(46.dp)
@@ -225,16 +225,40 @@ fun AddWalletScreen(
                 )
             ) {
                 Text(
-                    text = "Adicionar Carteira",
+                    text = "Adicionar carteira",
                     style = TextStyle(
                         fontFamily = AlataFont,
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
             }
 
             Spacer(modifier = Modifier.height(40.dp))
+
+            if (allWallets.isNotEmpty()) {
+                Text(
+                    text = "Carteiras Salvas (${allWallets.size})",
+                    style = TextStyle(
+                        fontFamily = AlataFont,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkGreen
+                    ),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                )
+
+                allWallets.forEach { wallet ->
+                    WalletItemRow(
+                        wallet = wallet,
+                        onRemoveClick = { walletViewModel.removeWallet(wallet.id) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
 
             val footerText = buildAnnotatedString {
                 append("Acesse ")
@@ -252,7 +276,7 @@ fun AddWalletScreen(
                     fontSize = 16.sp,
                     color = Color.Black
                 ),
-                modifier = Modifier.clickable { /* Ação de FAQ */ }
+                modifier = Modifier.clickable { }
             )
 
             Spacer(modifier = Modifier.height(20.dp))

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "188772289294",
+    "project_id": "app-finneo-2025",
+    "storage_bucket": "app-finneo-2025.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:188772289294:android:85205c61a092e5d2ec255f",
+        "android_client_info": {
+          "package_name": "com.finneo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "188772289294-65ggcpjv5tvpmbav7qn9nq3ap2nikvqg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.finneo",
+            "certificate_hash": "49b7a45b7d9d160c6593f881f19b11052217b6a0"
+          }
+        },
+        {
+          "client_id": "188772289294-9gsjdr69c4pdmr8df0f2undqsg1ds832.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBktyqZsVAav92W3YcvHqxYO1U_3DY8Rcw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "188772289294-9gsjdr69c4pdmr8df0f2undqsg1ds832.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,6 @@
 package com.finneo
 
+import androidx.compose.foundation.layout.RowScope
 import android.app.DatePickerDialog
 import android.widget.DatePicker
 import androidx.compose.animation.AnimatedVisibility
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -76,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finneo.ui.theme.AlataFont
 import com.finneo.ui.theme.BrightGreen
+import com.finneo.ui.theme.LeagueSpartanFont
 import java.util.Calendar
 import java.util.Locale
 
@@ -883,7 +886,6 @@ fun SocialLoginButton(
     }
 }
 
-// Mapa estático de cores para ativos conhecidos
 private val TickerColorMap = mapOf(
     // Cripto
     "BTC" to Color(0xFFF7931A),
@@ -919,4 +921,30 @@ fun getColorForTicker(ticker: String): Color {
     }
 
     return Color(r, g, b)
+}
+
+@Composable
+fun RowScope.ShareSelectionButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .weight(1f)
+            .clip(RoundedCornerShape(25))
+            .background(if (isSelected) BrightGreen else Color.Transparent)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (isSelected) Color.Black else Color.White,
+            fontWeight = FontWeight.SemiBold,
+            style = TextStyle(fontFamily = LeagueSpartanFont, fontSize = 16.sp),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+    }
 }

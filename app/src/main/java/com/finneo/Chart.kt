@@ -178,23 +178,18 @@ fun PieChart(
                 )
                 currentStartAngle += angleToDraw
 
-                // --- MODIFICAÇÃO AQUI ---
-                // Calculamos a porcentagem antes para decidir a rotação
                 val percentage = (pieChartInput.value / totalValue.toFloat() * 100).toInt()
 
                 var rotateAngle = currentStartAngle - angleToDraw / 2f - 90f
                 var factor = 1f
 
                 if (percentage == 100) {
-                    // Se for 100%, forçamos a rotação para 0 (horizontal)
-                    // Como a posição padrão do canvas sem rotação é "sul" (y positivo), isso coloca o texto embaixo.
                     rotateAngle = 0f
                     factor = 1f
                 } else if (rotateAngle > 90f) {
                     rotateAngle = (rotateAngle + 180).mod(360f)
                     factor = -0.92f
                 }
-                // -------------------------
 
                 drawContext.canvas.nativeCanvas.apply {
                     if (percentage > 3) {
